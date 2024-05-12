@@ -22,10 +22,13 @@
 - [WPS Network Attacks](#wps-network-attacks)
   - [WPS Pin Attack](#wps-pin-attack)
 - [Rogue APs](#rogue-aps)
+  - [Airodump](#airodump)
+  - [Wireshark](#wireshark)
   - [Creating Rogue AP](#creating-rogue-ap)
 - [WPA Enterprise Attacks](#wpa-enterprise-attacks)
-- [Captive Portals](#captive-portals)
-
+  - [PEAP](#peap)
+  - [Rogue AP](#rogue-ap)
+    
 ## Wireless Drivers & Tools 
 | Command | Description |
 |--|--|
@@ -389,7 +392,7 @@ Protection Extensible Authentication Protocol (PEAP)
 - Several EAP frame to handle authentication. Can identify `identity` followed by domain\username
 - After identitiy provided, next frame shows if PEAP or TLS etc.  
 
-### The attack 
+### Rogue AP 
 Rogue AP to match settings as closely as possible.  
 freeradius (open source RADIUS server) to generate a certificate.  
 
