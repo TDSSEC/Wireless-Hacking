@@ -40,7 +40,7 @@
 |`sudo iw link set wlan0mon up` | Bring up the interface 
 |`sudo iw dev wlan0 info` | check we are in monitor mode.  
 |`sudo iw dev wlan0 interface del` | Delete the monitor mode.  
-
+|`macchanger --show <INTERFACE>` | Get your MAC address  
 
 ## Connect to APs with wpa_supplicant 
 ### Open Networks 
@@ -62,7 +62,7 @@ Once connected, request a DHCP lease.
 network={
   ssid="home_network"
   scan_ssid=1
-  psk="correct battery horse staple"
+  psk="passphrasse"
   key_mgmt=WPA-PSK
 }
 ```
@@ -85,6 +85,25 @@ network={
   eap=PEAP
   phase1="peaplabel=0"
   phase2="auth=MSCHAPV2"
+}
+```
+`sudo wpa_supplicant -i wlan0 -c wifi-client.conf`  
+
+Once connected, request a DHCP lease.
+`sudo dhclient wlan0`  
+
+`ps aux | grep wpa_supplicant` kill pid once done.  
+
+### WEP Networks  
+```
+# Static WEP keys
+ctrl_interface=/var/run/wpa_supplicant
+network={
+	ssid="example wep network"
+	key_mgmt=NONE
+	wep_key0="abcde"
+	wep_key1=0102030405
+	wep_tx_keyidx=0
 }
 ```
 `sudo wpa_supplicant -i wlan0 -c wifi-client.conf`  
@@ -171,6 +190,9 @@ Aircrack-ng is considered an offline attack since it works with packet captures 
 | Command | Description |
 |--|--|
 |`sudo aircrack-ng -S` | Benchmark CPU cracking performance (15 second test) |
+|`sudo aircrack-ng hash.hccapx -w /wordlist.txt` | Use wordlist |
+|`sudo aircrack-ng hash.hccapx -e ESSID -w /wordlist.txt` | Use wordlist |
+
 
 ### Airdecap-ng  
 This is used after we have got the wireless key to a network.  
@@ -479,6 +501,27 @@ wpa_key_mgmt=WPA-PSK
 wpa_pairwise=TKIP CCMP
 wpa_passphrase=ASecurePassword
 auth_algs=3
+```
+
+#### Hosts with No Encryption
+```
+interface=wlan1
+ssid=hostel-A
+hw_mode=g
+channel=6
+driver=nl80211
+```
+
+#### Hosts with WEP
+```
+interface=wlan1
+hw_mode=g
+channel=6
+driver=nl80211
+ssid=hostel-A
+auth_algs=1
+wep_default_key=0
+wep_key0="54321"
 ```
 
 Attempt decrypt:
